@@ -115,7 +115,7 @@ async def gerar_lead_score(id: str):
 
     elif inicial == "93":
         resposta1 = card.get('UF_CRM_1754056899')
-        match resposta6:
+        match resposta1:
             case "155":
                 pontuacao += 3
             case "157":
