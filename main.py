@@ -235,7 +235,7 @@ async def gerar_lead_score(id: str):
     mais_comum_contagem = lista_completa[0][1]
 
     alternativas_mais_comuns = [i[0] for i in lista_completa if i[1] == mais_comum_contagem]
-    outras_alternativas = [i[0] for i in lista_completa if i[1] > 0]
+    outras_alternativas = [i[0] for i in lista_completa if i[1] > 0 and i[1] < mais_comum_contagem]
 
     if len(alternativas_mais_comuns) > 1:
         categoria = "301"
