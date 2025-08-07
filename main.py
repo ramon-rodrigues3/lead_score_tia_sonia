@@ -239,10 +239,7 @@ async def gerar_lead_score(id: str):
 
     if len(alternativas_mais_comuns) > 1:
         categoria = "301"
-        texto = (
-            f"Cliente com perfil equlibrado entre os traços"
-            ', '.join([nome_categoria.get(categoria) for categoria in alternativas_mais_comuns])
-        )
+        texto = "Cliente com perfil equlibrado entre os traços" + ', '.join([nome_categoria.get(categoria) for categoria in alternativas_mais_comuns])
     
     elif len(outras_alternativas) > 0:
         perfil = alternativas_mais_comuns[0]
