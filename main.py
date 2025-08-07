@@ -153,7 +153,7 @@ async def gerar_lead_score(id: str):
                 pontuacao += 1
         
         resposta5 = card.get('UF_CRM_1754057093')
-        match resposta6:
+        match resposta5:
             case "181":
                 pontuacao += 3
             case "183":
@@ -239,7 +239,7 @@ async def gerar_lead_score(id: str):
 
     if len(alternativas_mais_comuns) > 1:
         categoria = "301"
-        texto = "Cliente com perfil equlibrado entre os traços" + ', '.join([nome_categoria.get(categoria) for categoria in alternativas_mais_comuns])
+        texto = "Cliente com perfil equlibrado entre os traços " + ', '.join([nome_categoria.get(categoria) for categoria in alternativas_mais_comuns])
     
     elif len(outras_alternativas) > 0:
         perfil = alternativas_mais_comuns[0]
