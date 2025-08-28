@@ -305,7 +305,8 @@ async def resolver_sac(id: str):
             status_code=400
         )
     
-    equivalentes = bitrix.deal_list({"=UF_CRM_1754329595153": codigo_cliente, "STAGE_ID": "C5:UC_PT3G7E"}, [])
+    equivalentes = bitrix.deal_list({"=UF_CRM_1754329595153": codigo_cliente, "STAGE_ID": "C5:UC_PT3G7E"}, 
+        ["UF_CRM_1756322314808", "UF_CRM_1756322358546", "UF_CRM_1756326992416", "UF_CRM_1756408133187"])
 
     if not equivalentes:
         return JSONResponse(
