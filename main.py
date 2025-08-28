@@ -269,3 +269,79 @@ async def gerar_lead_score(id: str):
         },
         status_code=200
     )
+
+@app.post('/resolver-sac')
+async def resolver_sac(id: str):
+    try:
+        card = bitrix.deal_get(id)
+    except requests.exceptions.HTTPError as http_err:
+        raise HTTPException(status_code=500, detail=f"Erro HTTP ao conectar com Bitrix24: {http_err}")
+    except requests.exceptions.RequestException as err:
+        print(f"Erro de conexão ao Bitrix24: {err}")
+        raise HTTPException(status_code=500, detail=f"Erro de conexão ao Bitrix24: {err}")
+    
+    codigo_cliente = card.get('UF_CRM_1754329595153')
+    etapa = card.get('STAGE_ID')
+
+    if etapa != 'C7:LOSE' and etapa != 'C7:WON':
+        return JSONResponse(
+            {
+                "error": {
+                    "code": "UNEXPECTED_COLUMN",
+                    "message": "O negócio não está na coluna esperada.",
+                }
+            }, 
+            status_code=400
+        )
+    
+    if not codigo_cliente:
+        return JSONResponse(
+            {
+                "error": {
+                    "code": "MISSING_REQUIRED_FIELD",
+                    "message": "O campo (UF_CRM_1754329595153) é um campo obrigatório e não foi encontrado ou está vazio para o negócio fornecido.",
+                }
+            }, 
+            status_code=400
+        )
+    
+    equivalentes = bitrix.deal_list({"=UF_CRM_1754329595153": codigo_cliente, "STAGE_ID": "C5:UC_PT3G7E"}, [])
+
+    if not equivalentes:
+        return JSONResponse(
+            {
+                "error": {
+                    "code": "PARTIAL_SUCESS",
+                    "message": "O negócio foi processado, mas não foi encontrado equivalente no funil '5'.",
+                }
+            }, 
+            status_code=200
+        )
+
+    for equivalente in equivalentes:
+        equivalente_id = equivalente.get('ID')
+
+        bitrix.deal_update(equivalente_id, {
+            "STAGE_ID": 'C5:UC_5PKU1M',
+            "UF_CRM_1756322314808": equivalente.get("UF_CRM_1756322314808"),
+            "UF_CRM_1756322358546": equivalente.get("UF_CRM_1756322358546"),
+            "UF_CRM_1756326992416": equivalente.get("UF_CRM_1756326992416"),
+            "UF_CRM_1756408133187": equivalente.get("UF_CRM_1756408133187")
+        })
+    
+
+    return JSONResponse(
+        {
+            "error": {
+                "code": "SUCESS",
+                "message": "O negócio foi processado e todos os negócios equivalentes foram atualizados no funil '5'.",
+            }
+        }, 
+        status_code=200
+    )
+    # Solução encontrada = UF_CRM_1756322314808
+    # Como foi a solução = UF_CRM_1756322358546
+    # Motivo para não resolução = UF_CRM_1756326992416
+    # Resultado do SAC = UF_CRM_1756408133187
+
+    # Código do Cliente - UF_CRM_1754329595153
