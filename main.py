@@ -14,6 +14,8 @@ async def gerar_lead_score(id: str):
     except requests.exceptions.RequestException as err:
         print(f"Erro de conexão ao Bitrix24: {err}")
         raise HTTPException(status_code=500, detail=f"Erro de conexão ao Bitrix24: {err}")
+    
+    qualificacoes_realizadas = int(card.get('UF_CRM_1757601326310')) if card.get('UF_CRM_1757601326310') else 0
 
     pontuacao = 0
 
@@ -172,6 +174,15 @@ async def gerar_lead_score(id: str):
             "UF_CRM_1754339821860": texto
         }
     )
+    
+
+    if qualificacoes_realizadas < 1:
+        del card['ID']
+        card['STAGE_ID'] = "C5:NEW"
+        card['CATEGORY_ID'] = "5"
+
+        bitrix.deal_add(card)
+
     return JSONResponse(
         {
             "status": "success",
