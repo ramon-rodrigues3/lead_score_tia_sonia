@@ -37,9 +37,9 @@ async def gerar_lead_score(id: str):
             case "95":
                 pass
             case "97":
-                pontuacao += 1
+                pontuacao += 2
             case "99":
-                pass
+                pontuacao += 1
 
         resposta2 = card.get('UF_CRM_1753909299')
         match resposta2:
@@ -49,65 +49,11 @@ async def gerar_lead_score(id: str):
                 pontuacao += 1
             case "105":
                 pontuacao += 2
-
-        resposta3 = card.get('UF_CRM_1753909359')
+        
+        resposta3 = card.get('UF_CRM_1753909862')
         match resposta3:
-            case "107":
-                pass
-            case "109":
-                pontuacao += 2
-            case "111":
-                pontuacao += 3
-        
-        resposta4 = card.get('UF_CRM_1753909419')
-        match resposta4:
-            case "113":
-                pass
-            case "115":
-                pontuacao += 2
-            case "117":
-                pontuacao += 1
-
-        resposta5 = card.get('UF_CRM_1753909481')
-        match resposta5:
-            case "119":
-                pass
-            case "121":
-                pontuacao += 1
-            case "123":
-                pontuacao += 2
-        
-        resposta6 = card.get('UF_CRM_1753909529')
-        match resposta6:
-            case "125":
-                pass
-            case "127":
-                pontuacao += 1
-            case "129":
-                pontuacao += 2
-        
-        resposta7 = card.get('UF_CRM_1753909563')
-        match resposta7:
-            case "131":
-                pass
-            case "133":
-                pontuacao += 1
-            case "135":
-                pontuacao += 2
-
-        resposta8 = card.get('UF_CRM_1753909657')
-        match resposta8:
-            case "137":
-                pontuacao += 3
-            case "139":
-                pontuacao += 1
-            case "141":
-                pass
-        
-        resposta9 = card.get('UF_CRM_1753909862')
-        match resposta9:
             case "143":
-                pontuacao += 3
+                pontuacao += 2
             case "145":
                 pontuacao += 1
             case "147":
@@ -117,32 +63,14 @@ async def gerar_lead_score(id: str):
         resposta1 = card.get('UF_CRM_1754056899')
         match resposta1:
             case "155":
-                pontuacao += 3
-            case "157":
                 pontuacao += 2
+            case "157":
+                pontuacao += 1
             case "159":
                 pass
         
-        resposta2 = card.get('UF_CRM_1754056950')
+        resposta2 = card.get('UF_CRM_1754057056')
         match resposta2:
-            case "161":
-                pontuacao += 3
-            case "163":
-                pontuacao += 1
-            case "165":
-                pass
-        
-        resposta3 = card.get('UF_CRM_1754056998')
-        match resposta3:
-            case "167":
-                pontuacao += 3
-            case "169":
-                pontuacao += 2
-            case "171":
-                pass
-        
-        resposta4 = card.get('UF_CRM_1754057056')
-        match resposta4:
             case "173":
                 pontuacao += 2
             case "175":
@@ -151,32 +79,14 @@ async def gerar_lead_score(id: str):
                 pontuacao += 1
             case "179":
                 pontuacao += 1
-        
-        resposta5 = card.get('UF_CRM_1754057093')
-        match resposta5:
-            case "181":
-                pontuacao += 3
-            case "183":
-                pontuacao += 1
-            case "185":
-                pass
-        
-        resposta6 = card.get('UF_CRM_1754057136')
-        match resposta6:
-            case "187":
-                pontuacao += 3
-            case "189":
-                pontuacao += 2
-            case "191":
-                pass
 
-        resposta7 = card.get('UF_CRM_1753909862')
-        match resposta7:
-            case "143":
-                pontuacao += 3
-            case "145":
+        resposta3 = card.get('UF_CRM_1757618101')
+        match resposta3:
+            case "811":
+                pontuacao += 2
+            case "813":
                 pontuacao += 1
-            case "147":
+            case "815":
                 pass
             
     # Perfil DISC
@@ -257,7 +167,7 @@ async def gerar_lead_score(id: str):
     bitrix.deal_update(id, 
         {
             "UF_CRM_1753910152": pontuacao,
-            "UF_CRM_1754056679256": "149" if pontuacao > 9 else "151" if pontuacao > 4 else "153",
+            "UF_CRM_1754056679256": "149" if pontuacao > 4 else "151" if pontuacao > 2 else "153",
             "UF_CRM_1754339770821": categoria,
             "UF_CRM_1754339821860": texto
         }
@@ -346,3 +256,95 @@ async def resolver_sac(id: str):
     # Resultado do SAC = UF_CRM_1756408133187
 
     # Código do Cliente - UF_CRM_1754329595153
+
+@app.post("/validacao-cadastro")
+async def validacao_cadastro(id: str):
+    try:
+        card = bitrix.deal_get(id)
+    except requests.exceptions.HTTPError as http_err:
+        raise HTTPException(status_code=500, detail=f"Erro HTTP ao conectar com Bitrix24: {http_err}")
+    except requests.exceptions.RequestException as err:
+        print(f"Erro de conexão ao Bitrix24: {err}")
+        raise HTTPException(status_code=500, detail=f"Erro de conexão ao Bitrix24: {err}")
+    
+    etapa = card.get('STAGE_ID')
+    id_contato = card.get('CONTACT_ID')
+
+    # Cadastro Não Validado 
+    if etapa == "C3:PREPAYMENT_INVOICE":
+        equivalentes = bitrix.deal_list({"CATEGORY_ID": "", "=CONTACT_ID": id_contato, "STAGE_ID": "8"}, [])
+
+        if not equivalentes:
+            return JSONResponse(
+                {
+                    "error": {
+                        "code": "PARTIAL_SUCESS",
+                        "message": "O negócio foi processado, mas não foi encontrado um equivalente",
+                    }
+                }, 
+                status_code=200
+            )
+        
+        equivalente = equivalentes[0]
+        equivalente_id = equivalente.get('ID')
+
+        bitrix.deal_update(equivalente_id, 
+            {
+                "UF_CRM_1754332136594": card.get('UF_CRM_1754332136594'), # Motivo da não validação de cadastro
+                "UF_CRM_1757599499747": card.get('UF_CRM_1757599499747'), # Detalhes da não validação de cadastro
+                "STAGE_ID": "9"
+            }
+        )
+
+        return JSONResponse(
+            {
+                "status": "success",
+                "message": "O negócio equivalente foi atualizado com sucesso.",
+            },
+            status_code=200
+        )
+
+    # Cadastro Validado
+    elif etapa == "C3:PREPARATION":
+        equivalentes = bitrix.deal_list({"CATEGORY_ID": "", "=CONTACT_ID": id_contato, "STAGE_ID": "8"}, [])
+
+        if not equivalentes:
+            return JSONResponse(
+                {
+                    "error": {
+                        "code": "PARTIAL_SUCESS",
+                        "message": "O negócio foi processado, mas não foi encontrado um equivalente",
+                    }
+                }, 
+                status_code=200
+            )
+        
+        equivalente = equivalentes[0]
+        equivalente_id = equivalente.get('ID')
+
+        bitrix.deal_update(equivalente_id, 
+            {
+                "UF_CRM_1754330259328": card.get("UF_CRM_1754330259328"), # Limite de Crédito
+                "UF_CRM_1754329595153": card.get("UF_CRM_1754329595153"), # Código do Cliente
+                "STAGE_ID": "WON"
+            }
+        )
+
+        return JSONResponse(
+            {
+                "status": "success",
+                "message": "O negócio equivalente foi atualizado com sucesso.",
+            },
+            status_code=200
+        )
+
+    else:
+        return JSONResponse(
+            {
+                "error": {
+                    "code": "UNEXPECTED_COLUMN",
+                    "message": "O negócio não está na coluna esperada.",
+                }
+            }, 
+            status_code=400
+        )
