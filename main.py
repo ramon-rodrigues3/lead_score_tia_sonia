@@ -348,3 +348,90 @@ async def validacao_cadastro(id: str):
             }, 
             status_code=400
         )
+    
+@app.post("/aprovacao-credito")
+async def aprovacao_credito(id: str):
+    try:
+        card = bitrix.deal_get(id)
+    except requests.exceptions.HTTPError as http_err:
+        raise HTTPException(status_code=500, detail=f"Erro HTTP ao conectar com Bitrix24: {http_err}")
+    except requests.exceptions.RequestException as err:
+        print(f"Erro de conexão ao Bitrix24: {err}")
+        raise HTTPException(status_code=500, detail=f"Erro de conexão ao Bitrix24: {err}")
+    
+    codigo_cliente = card.get('UF_CRM_1754329595153')
+    etapa = card.get('STAGE_ID')
+
+    # Crédito Reprovado
+    if etapa == "C3:4":
+        equivalentes = bitrix.deal_list(
+            {"CATEGORY_ID": "5", "STAGE_ID": "C5:17" , "=UF_CRM_1754329595153": codigo_cliente}, [])
+
+        if not equivalentes: 
+            return JSONResponse(
+                {
+                    "error": {
+                        "code": "PARTIAL_SUCESS",
+                        "message": "O negócio foi processado, mas não foi encontrado um equivalente",
+                    }
+                }, 
+                status_code=200
+            )
+
+        equivalente = equivalentes[0]
+        equivalente_id = equivalente.get("ID")
+
+        bitrix.deal_update(equivalente_id, 
+            {
+                "UF_CRM_1757621126849": card.get("UF_CRM_1757621126849"), # Motivo para reprovação do crédito
+                "UF_CRM_1754335532954": card.get("UF_CRM_1754335532954"), # O cliente pode comprar à vista?
+                "STAGE_ID": "C5:19"
+            }
+        )
+
+        return JSONResponse(
+            {
+                "status": "success",
+                "message": "O negócio equivalente foi atualizado com sucesso.",
+            },
+            status_code=200
+        )
+
+    # Crédito Aprovado
+    elif etapa == "C3:5":
+        equivalentes = bitrix.deal_list(
+            {"CATEGORY_ID": "5", "STAGE_ID": "C5:17" , "=UF_CRM_1754329595153": codigo_cliente}, [])
+
+        if not equivalentes: 
+            return JSONResponse(
+                {
+                    "error": {
+                        "code": "PARTIAL_SUCESS",
+                        "message": "O negócio foi processado, mas não foi encontrado um equivalente",
+                    }
+                }, 
+                status_code=200
+            )
+
+        equivalente = equivalentes[0]
+        equivalente_id = equivalente.get("ID")
+
+        bitrix.deal_update(equivalente_id, {"STAGE_ID": "C5:18"})
+        return JSONResponse(
+            {
+                "status": "success",
+                "message": "O negócio equivalente foi atualizado com sucesso.",
+            },
+            status_code=200
+        )
+
+    else:
+        return JSONResponse(
+            {
+                "error": {
+                    "code": "UNEXPECTED_COLUMN",
+                    "message": "O negócio não está na coluna esperada.",
+                }
+            }, 
+            status_code=400
+        )
