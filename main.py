@@ -448,7 +448,7 @@ async def aprovacao_credito(id: str):
         )
 
 @app.post("/verificacao-pedido")
-async def verificacao_pedido():
+async def verificacao_pedido(id: str):
     try:
         card = bitrix.deal_get(id)
     except requests.exceptions.HTTPError as http_err:
