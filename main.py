@@ -446,9 +446,9 @@ async def aprovacao_credito(id: str):
             }, 
             status_code=400
         )
-    
-@app.post("atualizacao-pedido")
-async def atualizacao_pedido(id: str):
+
+@app.post("/verificacao-pedido")
+async def verificacao_pedido():
     try:
         card = bitrix.deal_get(id)
     except requests.exceptions.HTTPError as http_err:
@@ -457,12 +457,12 @@ async def atualizacao_pedido(id: str):
         print(f"Erro de conexão ao Bitrix24: {err}")
         raise HTTPException(status_code=500, detail=f"Erro de conexão ao Bitrix24: {err}")
     
-    codigo_pedido = card.get('UF_CRM_1757626001233')
+    codigo_pedido = card.get('UF_CRM_1757624409905')
     etapa = card.get('STAGE_ID')
 
-    if etapa == "C11:WON" or etapa == "C11:LOSE":
+    if etapa == "C3:UC_XCFLIY":
         equivalentes = bitrix.deal_list(
-            {"CATEGORY_ID": "9", "=UF_CRM_1757626001233": codigo_pedido}, [])
+            {"CATEGORY_ID": "9", "STAGE_ID": "C9:PREPARATION", "=UF_CRM_1757624409905": codigo_pedido}, [])
 
         if not equivalentes: 
             return JSONResponse(
@@ -478,7 +478,60 @@ async def atualizacao_pedido(id: str):
         equivalente = equivalentes[0]
         equivalente_id = equivalente.get("ID")
 
-        bitrix.deal_update(equivalente_id, {"STAGE_ID": "C9:UC_KK4CXQ"})
+        bitrix.deal_update(equivalente_id, 
+            {
+                "UF_CRM_1757625375106": card.get("UF_CRM_1757625375106"), # Observações do financeiro sobre o pedido
+                "STAGE_ID": "C9:UC_KK4CXQ" 
+            }
+        )
+    else:
+        return JSONResponse(
+            {
+                "error": {
+                    "code": "UNEXPECTED_COLUMN",
+                    "message": "O negócio não está na coluna esperada.",
+                }
+            }, 
+            status_code=400
+        )
+
+@app.post("/atualizacao-pedido")
+async def atualizacao_pedido(id: str):
+    try:
+        card = bitrix.deal_get(id)
+    except requests.exceptions.HTTPError as http_err:
+        raise HTTPException(status_code=500, detail=f"Erro HTTP ao conectar com Bitrix24: {http_err}")
+    except requests.exceptions.RequestException as err:
+        print(f"Erro de conexão ao Bitrix24: {err}")
+        raise HTTPException(status_code=500, detail=f"Erro de conexão ao Bitrix24: {err}")
+    
+    codigo_pedido = card.get('UF_CRM_1757624409905')
+    etapa = card.get('STAGE_ID')
+
+    if etapa == "C11:WON" or etapa == "C11:LOSE":
+        equivalentes = bitrix.deal_list(
+            {"CATEGORY_ID": "9", "=UF_CRM_1757624409905": codigo_pedido}, [])
+
+        if not equivalentes: 
+            return JSONResponse(
+                {
+                    "error": {
+                        "code": "PARTIAL_SUCESS",
+                        "message": "O negócio foi processado, mas não foi encontrado um equivalente",
+                    }
+                }, 
+                status_code=200
+            )
+
+        equivalente = equivalentes[0]
+        equivalente_id = equivalente.get("ID")
+
+        bitrix.deal_update(equivalente_id, 
+            {
+                "UF_CRM_1757626001233": card.get("UF_CRM_1757626001233"), # Observações da logística sobre o pedido
+                "STAGE_ID": "C9:UC_KK4CXQ"
+            }
+        )
 
         return JSONResponse(
             {
