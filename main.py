@@ -5,7 +5,7 @@ from datetime import datetime, date
 from collections import Counter
 app = FastAPI()
 
-@app.post('/lead-score/{id}')
+@app.post('/lead-score/')
 async def gerar_lead_score(id: str):
     try:
         card = bitrix.deal_get(id)
@@ -142,28 +142,31 @@ async def gerar_lead_score(id: str):
         "d": "Influente"
     }
 
-    contagem = Counter(respostas)
-    lista_completa = contagem.most_common()
-    mais_comum_contagem = lista_completa[0][1]
+    categoria = None
 
-    alternativas_mais_comuns = [i[0] for i in lista_completa if i[1] == mais_comum_contagem]
-    outras_alternativas = [i[0] for i in lista_completa if i[1] > 0 and i[1] < mais_comum_contagem]
+    if respostas:
+        contagem = Counter(respostas)
+        lista_completa = contagem.most_common()
+        mais_comum_contagem = lista_completa[0][1]
 
-    if len(alternativas_mais_comuns) > 1:
-        categoria = "301"
-        texto = "Cliente com perfil equlibrado entre os traços " + ', '.join([nome_categoria.get(categoria) for categoria in alternativas_mais_comuns])
-    
-    elif len(outras_alternativas) > 0:
-        perfil = alternativas_mais_comuns[0]
-        traco = outras_alternativas[0]
+        alternativas_mais_comuns = [i[0] for i in lista_completa if i[1] == mais_comum_contagem]
+        outras_alternativas = [i[0] for i in lista_completa if i[1] > 0 and i[1] < mais_comum_contagem]
 
-        categoria = cod_categoria.get(perfil)
-        texto = f"Cliente com perfil {nome_categoria.get(perfil)} com traço secundário {nome_categoria.get(traco)}"
-    else:
-        perfil = alternativas_mais_comuns[0]
+        if len(alternativas_mais_comuns) > 1:
+            categoria = "301"
+            texto = "Cliente com perfil equlibrado entre os traços " + ', '.join([nome_categoria.get(categoria) for categoria in alternativas_mais_comuns])
+        
+        elif len(outras_alternativas) > 0:
+            perfil = alternativas_mais_comuns[0]
+            traco = outras_alternativas[0]
 
-        categoria = cod_categoria.get(perfil)
-        texto = f"Cliente com perfil predominante {nome_categoria.get(perfil)}"
+            categoria = cod_categoria.get(perfil)
+            texto = f"Cliente com perfil {nome_categoria.get(perfil)} com traço secundário {nome_categoria.get(traco)}"
+        else:
+            perfil = alternativas_mais_comuns[0]
+
+            categoria = cod_categoria.get(perfil)
+            texto = f"Cliente com perfil predominante {nome_categoria.get(perfil)}"
     
     
     bitrix.deal_update(id, 
