@@ -367,7 +367,7 @@ async def validacao_cadastro(id: str):
         )
     
 @app.post("/validacao-cadastro-recuperacao")
-async def validacao_cadastro(id: str):
+async def validacao_cadastro_recuperacao(id: str):
     try:
         card = bitrix.deal_get(id)
     except requests.exceptions.HTTPError as http_err:
